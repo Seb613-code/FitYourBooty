@@ -12,3 +12,4 @@
 - Ajouter un flow de completion profil (done = ecran dedie + champs optionnels clairs). [DONE]
 - Centrer "Fit your Booty" sur login/register (done = alignement OK + spacing 5px). [DONE]
 - Traduire toutes les pages d'auth en FR (done = 100% des strings traduites + tests manuels). [DONE]
+- Faire un vrai dashboard en page d'accueil qui reprenne un etat des lieux des autres onglets (graphique poids/cal, calendrier entrainement).
