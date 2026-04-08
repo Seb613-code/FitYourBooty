@@ -8,7 +8,7 @@
 - Forcer la verification email des nouveaux comptes (done = acces protege tant que non verifie). [DONE]
 
 ## P2 - Qualite / UX
-- Revoir middleware/guards/session pour durcissement prod (done = checklist securite validee).
-- Ajouter un flow de completion profil (done = ecran dedie + champs optionnels clairs).
-- Centrer "Fit your Booty" sur login/register (done = alignement OK + spacing 5px).
-- Traduire toutes les pages d'auth en FR (done = 100% des strings traduites + tests manuels).
+- Revoir middleware/guards/session pour durcissement prod (done = checklist securite validee). [DONE]
+- Ajouter un flow de completion profil (done = ecran dedie + champs optionnels clairs). [DONE]
+- Centrer "Fit your Booty" sur login/register (done = alignement OK + spacing 5px). [DONE]
+- Traduire toutes les pages d'auth en FR (done = 100% des strings traduites + tests manuels). [DONE]
