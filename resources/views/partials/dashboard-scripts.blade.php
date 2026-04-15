@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateChart() {
         const theme = {
             poids: '#7dd3fc',
-            calories: 'rgba(251, 113, 133, 0.4)',
+            calories: '#fb7185',
             depenses: '#34d399',
             caloriesTrend: '#f43f5e',
             seuil: '#facc15',
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // Ajout de la tendance Calories
                 if (field === 'calories') {
-                    const yTrend = movingAverage(y, 9);
+                    const yTrend = movingAverage(y, 8);
                     traces.push({
                         x: x,
                         y: yTrend,
