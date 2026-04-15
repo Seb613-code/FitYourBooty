@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // Ajout de la tendance Calories
                 if (field === 'calories') {
-                    const yTrend = movingAverage(y, 8);
+                    const yTrend = movingAverage(y, 7);
                     traces.push({
                         x: x,
                         y: yTrend,
