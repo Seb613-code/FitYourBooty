@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let end = Math.min(data.length, i + half + 1);
             const values = data.slice(start, end)
                 .map(parseLocaleFloat)
-                .filter(v => !isNaN(v));
+                .filter(v => v !== null && v !== undefined && !isNaN(v));
             const sum = values.reduce((a, b) => a + b, 0);
             result.push(values.length > 0 ? sum / values.length : null);
         }
