@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateChart() {
         const theme = {
             poids: '#7dd3fc',
-            calories: '#fb7185',
+            calories: 'rgba(251, 113, 133, 0.4)',
             depenses: '#34d399',
             caloriesTrend: '#f43f5e',
             seuil: '#facc15',
