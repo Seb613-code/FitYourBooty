@@ -127,7 +127,7 @@
                     <p class="section-subtitle">Historique récent avec accès rapide aux actions.</p>
                 </div>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
                 <table class="table table-sm align-middle">
                     <thead>
                         <tr>
