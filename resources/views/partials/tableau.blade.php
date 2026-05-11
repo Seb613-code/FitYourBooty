@@ -23,7 +23,7 @@
                     <th>Protéines (g)</th>
                     <th>Lipides (g)</th>
                     <th>Glucides (g)</th>
-                    <th>Dépenses (€)</th>
+                    <th>Dépenses (Cal)</th>
                     <th>Étiquettes</th>
                     <th>Actions</th>
                 </tr>
