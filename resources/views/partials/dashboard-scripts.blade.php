@@ -5,6 +5,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const donnees = JSON.parse(donneesScript?.textContent || '[]');
     const dateMinInput = document.getElementById("date-min");
     const dateMaxInput = document.getElementById("date-max");
+    const metricFields = ['poids', 'pas', 'calories', 'depenses'];
+    const etiquettesCheckbox = document.getElementById('check-etiquettes');
+    const etiquettesHelp = document.getElementById('etiquettes-help');
 
     function parseLocaleFloat(value) {
         if (value === null || value === undefined || value === "") return null;
@@ -68,7 +71,22 @@ document.addEventListener("DOMContentLoaded", function () {
             text: '#e2e8f0',
             grid: 'rgba(148, 163, 184, 0.2)'
         };
-        const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+        const selectedMetrics = metricFields.filter(field => document.getElementById('check-' + field)?.checked);
+        const canDisplayEtiquettes = selectedMetrics.length === 1;
+        if (etiquettesCheckbox) {
+            if (!canDisplayEtiquettes) {
+                etiquettesCheckbox.checked = false;
+                etiquettesCheckbox.disabled = true;
+            } else {
+                etiquettesCheckbox.disabled = false;
+            }
+        }
+        if (etiquettesHelp) {
+            etiquettesHelp.textContent = canDisplayEtiquettes
+                ? 'Active l\'option pour afficher les étiquettes sur la courbe sélectionnée.'
+                : 'Indisponible quand plusieurs courbes sont sélectionnées.';
+        }
+        const showEtiquettes = canDisplayEtiquettes && !!etiquettesCheckbox?.checked;
         const minDate = dateMinInput?.value ? new Date(dateMinInput.value) : null;
         const maxDate = dateMaxInput?.value ? new Date(dateMaxInput.value) : null;
         const seuilInput = document.getElementById('seuil_calories');
@@ -89,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const traces = [];
 
         // Poids, Pas, Calories, Dépenses classiques
-        ['poids', 'pas', 'calories', 'depenses'].forEach(field => {
+        metricFields.forEach(field => {
             if (document.getElementById('check-' + field)?.checked) {
                 const x = filtered.map(d => d.date);
                 const y = filtered.map(d => parseLocaleFloat(d[field]));
@@ -103,11 +121,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 traces.push({
                     x,
                     y,
-                    text: labels,
+                    text: showEtiquettes ? labels : undefined,
                     textposition: 'top center',
-                    hoverinfo: 'text+y+x',
+                    hoverinfo: showEtiquettes ? 'text+y+x' : 'y+x',
                     name: field.charAt(0).toUpperCase() + field.slice(1),
-                    mode: 'lines+markers+text',
+                    mode: showEtiquettes ? 'lines+markers+text' : 'lines+markers',
                     type: 'scatter',
                     connectgaps: true,
                     line: {
@@ -209,7 +227,9 @@ const layout = {
         Plotly.newPlot('chart', traces, layout, { responsive: true });
     }
 
-    document.querySelectorAll('input[type="checkbox"]').forEach(box => {
+    [...metricFields.map(field => document.getElementById('check-' + field)), etiquettesCheckbox]
+        .filter(Boolean)
+        .forEach(box => {
         box.addEventListener('change', updateChart);
     });
 

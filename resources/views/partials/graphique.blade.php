@@ -25,6 +25,13 @@
                 <label class="form-check-label" for="check-depenses">Dépenses</label>
             </div>
         </div>
+        <div class="mb-3">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="check-etiquettes">
+                <label class="form-check-label" for="check-etiquettes">Afficher les étiquettes</label>
+            </div>
+            <small id="etiquettes-help" class="text-muted d-block">Disponible uniquement quand une seule courbe est sélectionnée.</small>
+        </div>
         <div id="chart" style="height: 400px;"></div>
     </div>
 </div>
