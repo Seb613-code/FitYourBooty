@@ -18,6 +18,7 @@
                 <tr>
                     <th>Date</th>
                     <th>Poids (kg)</th>
+                    <th>Pas</th>
                     <th>Calories</th>
                     <th>Protéines (g)</th>
                     <th>Lipides (g)</th>
@@ -32,6 +33,7 @@
                     <tr>
                         <td>{{ \Carbon\Carbon::parse($donnee->date)->format('d-m-Y') }}</td>
                         <td>{{ $donnee->poids }}</td>
+                        <td>{{ $donnee->pas }}</td>
                         <td>{{ $donnee->calories }}</td>
                         <td>{{ $donnee->proteines }}</td>
                         <td>{{ $donnee->lipides }}</td>

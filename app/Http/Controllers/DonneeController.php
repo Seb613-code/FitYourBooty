@@ -22,6 +22,7 @@ class DonneeController extends Controller
         $data = $request->validate([
             'date' => 'required|date',
             'poids' => 'nullable|numeric',
+            'pas' => 'nullable|integer|min:0',
             'calories' => 'nullable|numeric',
             'proteines' => 'nullable|numeric',
             'lipides' => 'nullable|numeric',
@@ -68,6 +69,7 @@ class DonneeController extends Controller
                 'user_id' => $userId,
                 'date' => $date ? $date->format('Y-m-d') : null,
                 'poids' => toDecimal($ligne['poids']),
+                'pas' => isset($ligne['pas']) && $ligne['pas'] !== '' ? (int) toDecimal($ligne['pas']) : null,
                 'calories' => toDecimal($ligne['calories']),
                 'proteines' => toDecimal($ligne['proteines']),
                 'lipides' => toDecimal($ligne['lipides']),
@@ -91,6 +93,7 @@ class DonneeController extends Controller
         $data = $request->validate([
             'date' => 'required|date',
             'poids' => 'nullable|numeric',
+            'pas' => 'nullable|integer|min:0',
             'calories' => 'nullable|numeric',
             'proteines' => 'nullable|numeric',
             'lipides' => 'nullable|numeric',

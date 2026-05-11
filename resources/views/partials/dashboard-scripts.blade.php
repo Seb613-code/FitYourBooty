@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const theme = {
             poids: '#7dd3fc',
             calories: 'rgba(251, 113, 133, 0.4)',
+            pas: '#a78bfa',
             depenses: '#34d399',
             caloriesTrend: '#f43f5e',
             seuil: '#facc15',
@@ -87,14 +88,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const traces = [];
 
-        // Poids, Calories, Dépenses classiques
-        ['poids', 'calories', 'depenses'].forEach(field => {
+        // Poids, Pas, Calories, Dépenses classiques
+        ['poids', 'pas', 'calories', 'depenses'].forEach(field => {
             if (document.getElementById('check-' + field)?.checked) {
                 const x = filtered.map(d => d.date);
                 const y = filtered.map(d => parseLocaleFloat(d[field]));
                 const labels = filtered.map(d => d.etiquettes || '');
 
                 const lineColor = (field === 'calories') ? theme.calories
+                    : (field === 'pas') ? theme.pas
                     : (field === 'depenses') ? theme.depenses
                     : theme.poids;
 
@@ -193,7 +195,7 @@ const layout = {
         zerolinecolor: theme.grid
     },
     yaxis2: {
-        title: 'Calories / Dépenses',
+        title: 'Calories / Dépenses / Pas',
         overlaying: 'y',
         side: 'right',
         showgrid: false

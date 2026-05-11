@@ -17,6 +17,10 @@
                 <label class="form-check-label" for="check-calories">Calories</label>
             </div>
             <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="check-pas" value="pas" checked>
+                <label class="form-check-label" for="check-pas">Nombre de pas</label>
+            </div>
+            <div class="form-check form-check-inline">
                 <input class="form-check-input" type="checkbox" id="check-depenses" value="depenses">
                 <label class="form-check-label" for="check-depenses">Dépenses</label>
             </div>

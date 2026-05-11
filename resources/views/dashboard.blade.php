@@ -44,6 +44,9 @@
                         <input type="number" step="0.1" name="poids" class="form-control" placeholder="Poids (kg)">
                     </div>
                     <div class="col-md-3">
+                        <input type="number" name="pas" class="form-control" placeholder="Nombre de pas">
+                    </div>
+                    <div class="col-md-3">
                         <input type="number" name="calories" class="form-control" placeholder="Calories">
                     </div>
                     <div class="col-md-3">

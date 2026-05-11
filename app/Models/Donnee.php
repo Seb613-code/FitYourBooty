@@ -10,6 +10,7 @@ protected $fillable = [
     'user_id',
     'date',
     'poids',
+    'pas',
     'calories',
     'proteines',
     'lipides',
