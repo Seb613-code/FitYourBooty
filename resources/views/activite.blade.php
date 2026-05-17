@@ -539,27 +539,72 @@
             return value || '—';
         }
 
-        function computeSeanceCharge(seance) {
-            return (seance.exercices || []).reduce((total, exercice) => {
-                const series = exercice.series || [];
-                const exerciceCharge = series.reduce((sum, serie) => {
-                    if (!serie.done) {
-                        return sum;
-                    }
-                    const reps = Number(serie.reps || 0);
-                    const poids = Number(serie.poids || 0);
-                    return sum + reps * poids;
-                }, 0);
-                return total + exerciceCharge;
-            }, 0);
+        function computeExerciceMetrics(exercice) {
+            const metrics = (exercice.series || []).reduce((acc, serie) => {
+                if (!serie.done) {
+                    return acc;
+                }
+
+                const reps = Number(serie.reps || 0);
+                const poids = Number(serie.poids || 0);
+                if (reps <= 0 || poids < 0) {
+                    return acc;
+                }
+
+                acc.charge += reps * poids;
+                acc.reps += reps;
+                return acc;
+            }, { charge: 0, reps: 0 });
+
+            return {
+                charge: metrics.charge,
+                reps: metrics.reps,
+                chargePerRep: metrics.reps > 0 ? metrics.charge / metrics.reps : 0
+            };
         }
 
-        function aggregateByDate(entries) {
+        function computeSeanceMetrics(seance) {
+            const totals = (seance.exercices || []).reduce((acc, exercice) => {
+                const exerciceMetrics = computeExerciceMetrics(exercice);
+                acc.charge += exerciceMetrics.charge;
+                acc.reps += exerciceMetrics.reps;
+                return acc;
+            }, { charge: 0, reps: 0 });
+
+            return {
+                charge: totals.charge,
+                reps: totals.reps,
+                chargePerRep: totals.reps > 0 ? totals.charge / totals.reps : 0
+            };
+        }
+
+        function aggregateMetricsByDate(entries) {
+            const map = new Map();
+            entries.forEach(entry => {
+                const key = entry.date;
+                const current = map.get(key) || { charge: 0, reps: 0 };
+                current.charge += Number(entry.charge || 0);
+                current.reps += Number(entry.reps || 0);
+                map.set(key, current);
+            });
+
+            return Array.from(map.entries())
+                .map(([date, value]) => ({
+                    date,
+                    charge: value.charge,
+                    reps: value.reps,
+                    chargePerRep: value.reps > 0 ? value.charge / value.reps : 0
+                }))
+                .sort((a, b) => toDate(a.date) - toDate(b.date));
+        }
+
+        function aggregateValuesByDate(entries) {
             const map = new Map();
             entries.forEach(entry => {
                 const key = entry.date;
                 map.set(key, (map.get(key) || 0) + entry.value);
             });
+
             return Array.from(map.entries())
                 .map(([date, value]) => ({ date, value }))
                 .sort((a, b) => toDate(a.date) - toDate(b.date));
@@ -596,16 +641,20 @@
                     return;
                 }
                 const label = formatLabel(seance.type);
-                const charge = computeSeanceCharge(seance);
+                const metrics = computeSeanceMetrics(seance);
                 if (!typeMap.has(label)) {
                     typeMap.set(label, []);
                 }
-                typeMap.get(label).push({ date: seance.date, value: charge });
+                typeMap.get(label).push({
+                    date: seance.date,
+                    charge: metrics.charge,
+                    reps: metrics.reps
+                });
             });
 
             return Array.from(typeMap.entries()).map(([label, entries]) => ({
                 label,
-                points: aggregateByDate(entries)
+                points: aggregateMetricsByDate(entries)
             }));
         }
 
@@ -620,22 +669,21 @@
                 }
                 (seance.exercices || []).forEach(exercice => {
                     const label = formatLabel(exercice.nom);
-                    const charge = (exercice.series || []).reduce((sum, serie) => {
-                        if (!serie.done) {
-                            return sum;
-                        }
-                        return sum + Number(serie.reps || 0) * Number(serie.poids || 0);
-                    }, 0);
+                    const metrics = computeExerciceMetrics(exercice);
                     if (!exerciceMap.has(label)) {
                         exerciceMap.set(label, []);
                     }
-                    exerciceMap.get(label).push({ date: seance.date, value: charge });
+                    exerciceMap.get(label).push({
+                        date: seance.date,
+                        charge: metrics.charge,
+                        reps: metrics.reps
+                    });
                 });
             });
 
             return Array.from(exerciceMap.entries()).map(([label, entries]) => ({
                 label,
-                points: aggregateByDate(entries)
+                points: aggregateMetricsByDate(entries)
             }));
         }
 
@@ -648,7 +696,7 @@
                     value: Number(seance[field] || 0)
                 }))
                 .filter(entry => entry.value > 0);
-            return [{ label: field === 'calories' ? 'Calories' : 'Durée (min)', points: aggregateByDate(entries) }];
+            return [{ label: field === 'calories' ? 'Calories' : 'Durée (min)', points: aggregateValuesByDate(entries) }];
         }
 
         function buildSeriesOptions(series, preferredLabel) {
@@ -690,17 +738,21 @@
             let series = [];
             let title = '';
             let yTitle = '';
+            let yTitleSecondary = '';
             let multiSeries = false;
+            const isChargeMode = mode === 'seance_type' || mode === 'exercice';
 
             if (mode === 'seance_type') {
                 series = getSeanceTypeSeries();
-                title = 'Charge totale par type de séance';
-                yTitle = 'Charge (kg)';
+                title = 'Charge totale et charge/rep par type de séance';
+                yTitle = 'Charge totale (kg)';
+                yTitleSecondary = 'Charge/rep (kg/rep)';
                 multiSeries = true;
             } else if (mode === 'exercice') {
                 series = getExerciceSeries();
-                title = 'Charge par exercice';
-                yTitle = 'Charge (kg)';
+                title = 'Charge totale et charge/rep par exercice';
+                yTitle = 'Charge totale (kg)';
+                yTitleSecondary = 'Charge/rep (kg/rep)';
                 multiSeries = true;
             } else if (mode === 'cardio_calories') {
                 series = getCardioSeries('calories');
@@ -731,22 +783,59 @@
                     ? ['#f97316']
                     : ['#ff6b6b', '#f97316', '#facc15', '#fb7185', '#f43f5e'];
 
-            const traces = filteredSeries.map((item, index) => ({
-                x: item.points.map(point => point.date),
-                y: item.points.map(point => point.value),
-                name: item.label,
-                mode: 'lines+markers',
-                type: 'scatter',
-                connectgaps: true,
-                line: {
-                    color: palette[index % palette.length],
-                    width: 2.6
-                },
-                marker: {
-                    color: palette[index % palette.length],
-                    size: 6
-                }
-            }));
+            const traces = isChargeMode
+                ? filteredSeries.flatMap((item, index) => {
+                    const primaryColor = palette[index % palette.length];
+                    return [{
+                        x: item.points.map(point => point.date),
+                        y: item.points.map(point => point.charge),
+                        name: 'Charge totale',
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        connectgaps: true,
+                        line: {
+                            color: primaryColor,
+                            width: 2.8
+                        },
+                        marker: {
+                            color: primaryColor,
+                            size: 6
+                        }
+                    }, {
+                        x: item.points.map(point => point.date),
+                        y: item.points.map(point => point.chargePerRep),
+                        name: 'Charge/rep',
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        yaxis: 'y2',
+                        connectgaps: true,
+                        line: {
+                            color: '#38bdf8',
+                            width: 2.2,
+                            dash: 'dot'
+                        },
+                        marker: {
+                            color: '#38bdf8',
+                            size: 6
+                        }
+                    }];
+                })
+                : filteredSeries.map((item, index) => ({
+                    x: item.points.map(point => point.date),
+                    y: item.points.map(point => point.value),
+                    name: item.label,
+                    mode: 'lines+markers',
+                    type: 'scatter',
+                    connectgaps: true,
+                    line: {
+                        color: palette[index % palette.length],
+                        width: 2.6
+                    },
+                    marker: {
+                        color: palette[index % palette.length],
+                        size: 6
+                    }
+                }));
 
             const layout = {
                 title,
@@ -770,6 +859,16 @@
                     y: -0.2
                 }
             };
+
+            if (isChargeMode) {
+                layout.yaxis2 = {
+                    title: yTitleSecondary,
+                    overlaying: 'y',
+                    side: 'right',
+                    gridcolor: 'rgba(56, 189, 248, 0.14)',
+                    zerolinecolor: 'rgba(56, 189, 248, 0.14)'
+                };
+            }
 
             Plotly.newPlot(chartContainer, traces, layout, { responsive: true });
         }
