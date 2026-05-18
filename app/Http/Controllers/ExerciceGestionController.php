@@ -68,6 +68,7 @@ class ExerciceGestionController extends Controller
                 'is_cardio' => $seance->is_cardio ?? false,
                 'duration_minutes' => $seance->duration_minutes,
                 'calories' => $seance->calories,
+                'notes' => $seance->notes,
                 'exercices' => $seance->exercices->map(function ($exercice) {
                     return [
                         'nom' => $exercice->exercice->nom ?? '',

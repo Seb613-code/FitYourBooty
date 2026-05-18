@@ -38,6 +38,19 @@
                         <label class="form-label">Type de séance</label>
                         <input type="text" class="form-control" value="{{ $seance->type->nom ?? '—' }}" disabled>
                     </div>
+                    <div class="col-12">
+                        <label for="notes" class="form-label">Notes</label>
+                        <input
+                            type="text"
+                            id="notes"
+                            name="notes"
+                            class="form-control"
+                            maxlength="256"
+                            value="{{ old('notes', $seance->notes) }}"
+                            placeholder="Contexte, sensations, conditions particulières..."
+                        >
+                        <div class="form-text">Champ optionnel, 256 caractères maximum.</div>
+                    </div>
                 </div>
 
                 <div class="mt-4 {{ ($isCardio ?? false) ? 'd-none' : '' }}" id="musculation-section">

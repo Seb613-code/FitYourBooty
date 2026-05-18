@@ -74,6 +74,20 @@
                         @endforeach
                     </select>
                 </div>
+
+                <div class="col-12">
+                    <label for="notes" class="form-label">Notes</label>
+                    <input
+                        type="text"
+                        id="notes"
+                        name="notes"
+                        class="form-control"
+                        maxlength="256"
+                        value="{{ old('notes') }}"
+                        placeholder="Contexte, sensations, conditions particulières..."
+                    >
+                    <div class="form-text">Champ optionnel, 256 caractères maximum.</div>
+                </div>
             </div>
 
                 <div class="mt-4 d-none" id="musculation-section">
@@ -192,6 +206,10 @@
                         <option value="cardio_duration">Cardio - durée</option>
                     </select>
                     <select id="activity-chart-series" class="form-select form-select-sm d-none" style="min-width: 220px;"></select>
+                    <div class="form-check form-switch d-flex align-items-center ms-1">
+                        <input class="form-check-input" type="checkbox" id="activity-show-notes">
+                        <label class="form-check-label ms-2" for="activity-show-notes">Afficher les notes</label>
+                    </div>
                 </div>
             </div>
             <div id="activity-chart" style="height: 420px;"></div>
@@ -352,6 +370,7 @@
         const typeCategoryMap = JSON.parse(
             document.getElementById('type-category-data').textContent || '{}'
         );
+        const notesToggle = document.getElementById('activity-show-notes');
         let exerciceIndex = 0;
         let cachedOptions = [];
 
@@ -539,6 +558,28 @@
             return value || '—';
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function formatNotes(notes) {
+            const formatted = (notes || [])
+                .filter(Boolean)
+                .map(note => escapeHtml(note).replaceAll('\n', '<br>'));
+
+            return formatted.length ? formatted.join('<br>') : '<em>Aucune note</em>';
+        }
+
+        function buildHoverTemplate(yLabel, yFormat = '.0f') {
+            const notesLine = notesToggle?.checked ? '<br><br><b>Notes</b><br>%{customdata}' : '';
+            return `Date : %{x|%d/%m/%Y}<br>${yLabel} : %{y:${yFormat}}${notesLine}<extra></extra>`;
+        }
+
         function computeExerciceMetrics(exercice) {
             const metrics = (exercice.series || []).reduce((acc, serie) => {
                 if (!serie.done) {
@@ -582,9 +623,10 @@
             const map = new Map();
             entries.forEach(entry => {
                 const key = entry.date;
-                const current = map.get(key) || { charge: 0, reps: 0 };
+                const current = map.get(key) || { charge: 0, reps: 0, notes: [] };
                 current.charge += Number(entry.charge || 0);
                 current.reps += Number(entry.reps || 0);
+                current.notes.push(...(entry.notes || []));
                 map.set(key, current);
             });
 
@@ -593,7 +635,8 @@
                     date,
                     charge: value.charge,
                     reps: value.reps,
-                    chargePerRep: value.reps > 0 ? value.charge / value.reps : 0
+                    chargePerRep: value.reps > 0 ? value.charge / value.reps : 0,
+                    notes: Array.from(new Set(value.notes.filter(Boolean)))
                 }))
                 .sort((a, b) => toDate(a.date) - toDate(b.date));
         }
@@ -602,11 +645,18 @@
             const map = new Map();
             entries.forEach(entry => {
                 const key = entry.date;
-                map.set(key, (map.get(key) || 0) + entry.value);
+                const current = map.get(key) || { value: 0, notes: [] };
+                current.value += Number(entry.value || 0);
+                current.notes.push(...(entry.notes || []));
+                map.set(key, current);
             });
 
             return Array.from(map.entries())
-                .map(([date, value]) => ({ date, value }))
+                .map(([date, value]) => ({
+                    date,
+                    value: value.value,
+                    notes: Array.from(new Set(value.notes.filter(Boolean)))
+                }))
                 .sort((a, b) => toDate(a.date) - toDate(b.date));
         }
 
@@ -648,7 +698,8 @@
                 typeMap.get(label).push({
                     date: seance.date,
                     charge: metrics.charge,
-                    reps: metrics.reps
+                    reps: metrics.reps,
+                    notes: seance.notes ? [seance.notes] : []
                 });
             });
 
@@ -676,7 +727,8 @@
                     exerciceMap.get(label).push({
                         date: seance.date,
                         charge: metrics.charge,
-                        reps: metrics.reps
+                        reps: metrics.reps,
+                        notes: seance.notes ? [seance.notes] : []
                     });
                 });
             });
@@ -693,7 +745,8 @@
                 .filter(seance => withinDateRange(seance.date))
                 .map(seance => ({
                     date: seance.date,
-                    value: Number(seance[field] || 0)
+                    value: Number(seance[field] || 0),
+                    notes: seance.notes ? [seance.notes] : []
                 }))
                 .filter(entry => entry.value > 0);
             return [{ label: field === 'calories' ? 'Calories' : 'Durée (min)', points: aggregateValuesByDate(entries) }];
@@ -793,6 +846,8 @@
                         mode: 'lines+markers',
                         type: 'scatter',
                         connectgaps: true,
+                        customdata: item.points.map(point => formatNotes(point.notes)),
+                        hovertemplate: buildHoverTemplate('Charge totale (kg)', '.0f'),
                         line: {
                             color: primaryColor,
                             width: 2.8
@@ -809,6 +864,8 @@
                         type: 'scatter',
                         yaxis: 'y2',
                         connectgaps: true,
+                        customdata: item.points.map(point => formatNotes(point.notes)),
+                        hovertemplate: buildHoverTemplate('Charge/rep (kg/rep)', '.2f'),
                         line: {
                             color: '#38bdf8',
                             width: 2.2,
@@ -827,6 +884,8 @@
                     mode: 'lines+markers',
                     type: 'scatter',
                     connectgaps: true,
+                    customdata: item.points.map(point => formatNotes(point.notes)),
+                    hovertemplate: buildHoverTemplate(item.label, '.0f'),
                     line: {
                         color: palette[index % palette.length],
                         width: 2.6
@@ -889,6 +948,7 @@
 
         modeSelect.addEventListener('change', renderChart);
         seriesSelect.addEventListener('change', renderChart);
+        notesToggle?.addEventListener('change', renderChart);
         dateStartInput?.addEventListener('change', renderChart);
         dateEndInput?.addEventListener('change', renderChart);
         setDefaultDateRange();

@@ -14,6 +14,7 @@ class Seance extends Model
         'date',
         'duration_minutes',
         'calories',
+        'notes',
     ];
 
     public function type(): BelongsTo

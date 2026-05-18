@@ -17,6 +17,7 @@ class SeanceController extends Controller
         $data = $request->validate([
             'date' => 'required|date',
             'type' => 'required|string|exists:seance_types,code',
+            'notes' => 'nullable|string|max:256',
             'duration_minutes' => 'nullable|integer|min:0',
             'calories' => 'nullable|integer|min:0',
             'exercices' => 'nullable|array|min:1',
@@ -26,6 +27,9 @@ class SeanceController extends Controller
             'exercices.*.series.*.reps' => 'nullable|integer|min:0',
             'exercices.*.series.*.weight' => 'nullable|numeric|min:0',
         ]);
+
+        $notes = isset($data['notes']) ? trim($data['notes']) : null;
+        $notes = $notes === '' ? null : $notes;
 
         $seanceType = SeanceType::query()
             ->with('categorie:id,nom')
@@ -55,13 +59,14 @@ class SeanceController extends Controller
             }
         }
 
-        DB::transaction(function () use ($data, $seanceTypeId, $isCardio) {
+        DB::transaction(function () use ($data, $seanceTypeId, $isCardio, $notes) {
             $seance = Seance::create([
                 'user_id' => Auth::id(),
                 'seance_type_id' => $seanceTypeId,
                 'date' => $data['date'],
                 'duration_minutes' => $isCardio ? $data['duration_minutes'] : null,
                 'calories' => $isCardio ? $data['calories'] : null,
+                'notes' => $notes,
             ]);
 
             if ($isCardio) {
@@ -133,6 +138,7 @@ class SeanceController extends Controller
 
         $data = $request->validate([
             'date' => 'required|date',
+            'notes' => 'nullable|string|max:256',
             'duration_minutes' => 'nullable|integer|min:0',
             'calories' => 'nullable|integer|min:0',
             'exercices' => 'nullable|array|min:1',
@@ -142,6 +148,9 @@ class SeanceController extends Controller
             'exercices.*.series.*.reps' => 'nullable|integer|min:0',
             'exercices.*.series.*.weight' => 'nullable|numeric|min:0',
         ]);
+
+        $notes = isset($data['notes']) ? trim($data['notes']) : null;
+        $notes = $notes === '' ? null : $notes;
 
         $seance->loadMissing('type.categorie');
         $categorieNom = $seance->type?->categorie?->nom ?? '';
@@ -162,11 +171,12 @@ class SeanceController extends Controller
             }
         }
 
-        DB::transaction(function () use ($data, $seance, $isCardio) {
+        DB::transaction(function () use ($data, $seance, $isCardio, $notes) {
             $seance->update([
                 'date' => $data['date'],
                 'duration_minutes' => $isCardio ? $data['duration_minutes'] : null,
                 'calories' => $isCardio ? $data['calories'] : null,
+                'notes' => $notes,
             ]);
 
             $seance->exercices()->delete();
