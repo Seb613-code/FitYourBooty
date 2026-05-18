@@ -549,6 +549,7 @@
         const chartContainer = document.getElementById('activity-chart');
         const dateStartInput = document.getElementById('activity-date-start');
         const dateEndInput = document.getElementById('activity-date-end');
+        const notesToggle = document.getElementById('activity-show-notes');
 
         function toDate(value) {
             return new Date(value);
@@ -932,17 +933,36 @@
             Plotly.newPlot(chartContainer, traces, layout, { responsive: true });
         }
 
+        function formatDateInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function setDefaultDateRange() {
             const today = new Date();
-            const end = today.toISOString().slice(0, 10);
+            const end = formatDateInput(today);
             const startDate = new Date(today);
             startDate.setFullYear(today.getFullYear() - 1);
-            const start = startDate.toISOString().slice(0, 10);
-            if (dateStartInput && !dateStartInput.value) {
+            const start = formatDateInput(startDate);
+            if (dateStartInput) {
                 dateStartInput.value = start;
             }
-            if (dateEndInput && !dateEndInput.value) {
+            if (dateEndInput) {
                 dateEndInput.value = end;
+            }
+        }
+
+        function setDefaultChartState() {
+            if (modeSelect) {
+                modeSelect.value = 'seance_type';
+            }
+            if (seriesSelect) {
+                seriesSelect.value = '';
+            }
+            if (notesToggle) {
+                notesToggle.checked = false;
             }
         }
 
@@ -951,6 +971,7 @@
         notesToggle?.addEventListener('change', renderChart);
         dateStartInput?.addEventListener('change', renderChart);
         dateEndInput?.addEventListener('change', renderChart);
+        setDefaultChartState();
         setDefaultDateRange();
         renderChart();
     })();
