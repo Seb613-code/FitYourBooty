@@ -7,7 +7,7 @@ Cette documentation décrit la procédure pour mettre à jour l'application sur 
 # Connexion au serveur
 
 ```
-ssh seb@82.165.150.107
+ssh seb@<REDACTED>
 ```
 
 ---
