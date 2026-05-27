@@ -897,6 +897,38 @@
                     }
                 }));
 
+            const maxValueAnnotations = traces
+                .map(trace => {
+                    const points = trace.x
+                        .map((date, index) => ({
+                            date,
+                            value: Number(trace.y[index])
+                        }))
+                        .filter(point => !Number.isNaN(point.value));
+
+                    if (!points.length) {
+                        return null;
+                    }
+
+                    const maxValue = Math.max(...points.map(point => point.value));
+                    const latestMaxPoint = points
+                        .filter(point => point.value === maxValue)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+                    return {
+                        x: latestMaxPoint.date,
+                        y: latestMaxPoint.value,
+                        yref: trace.yaxis || 'y',
+                        text: '⭐',
+                        showarrow: false,
+                        yshift: 22,
+                        font: {
+                            size: 18
+                        }
+                    };
+                })
+                .filter(Boolean);
+
             const layout = {
                 title,
                 dragmode: 'zoom',
@@ -917,7 +949,8 @@
                 legend: {
                     orientation: 'h',
                     y: -0.2
-                }
+                },
+                annotations: maxValueAnnotations
             };
 
             if (isChargeMode) {
