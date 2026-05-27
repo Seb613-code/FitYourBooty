@@ -312,7 +312,7 @@ const layout = {
 
         rows.forEach(row => {
             const dateCell = row.querySelector("td");
-            const dateValue = dateCell?.querySelector('input[type="date"]')?.value || dateCell?.dataset.order || dateCell?.textContent.trim();
+            const dateValue = dateCell?.dataset.order || dateCell?.textContent.trim();
             const rowDate = new Date(dateValue.includes('-') && dateValue.length === 10 ? dateValue : dateValue.split("-").reverse().join("-"));
             let visible = true;
             if (minDate && rowDate < minDate) visible = false;
@@ -320,6 +320,32 @@ const layout = {
             row.style.display = visible ? "" : "none";
         });
     }
+
+    document.querySelectorAll('[data-editable-row]').forEach(row => {
+        const editButton = row.querySelector('[data-edit-button]');
+        const saveButton = row.querySelector('[data-save-button]');
+        const cancelButton = row.querySelector('[data-cancel-button]');
+        const inputs = Array.from(row.querySelectorAll('[data-edit-input]'));
+        const displays = Array.from(row.querySelectorAll('[data-display]'));
+        const initialValues = new Map(inputs.map(input => [input, input.value]));
+
+        function setEditMode(enabled) {
+            inputs.forEach(input => {
+                input.disabled = !enabled;
+                input.classList.toggle('d-none', !enabled);
+                if (!enabled) {
+                    input.value = initialValues.get(input) || '';
+                }
+            });
+            displays.forEach(display => display.classList.toggle('d-none', enabled));
+            editButton?.classList.toggle('d-none', enabled);
+            saveButton?.classList.toggle('d-none', !enabled);
+            cancelButton?.classList.toggle('d-none', !enabled);
+        }
+
+        editButton?.addEventListener('click', () => setEditMode(true));
+        cancelButton?.addEventListener('click', () => setEditMode(false));
+    });
 
     dateMinInput.addEventListener("input", filterRows);
     dateMaxInput.addEventListener("input", filterRows);

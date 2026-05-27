@@ -30,46 +30,48 @@
             </thead>
             <tbody>
                 @foreach($donnees as $donnee)
-                    <tr>
-                        <td data-order="{{ $donnee->date }}">
-                            <input
-                                form="donnee-update-{{ $donnee->id }}"
-                                type="date"
-                                name="date"
-                                class="form-control form-control-sm"
-                                value="{{ \Carbon\Carbon::parse($donnee->date)->format('Y-m-d') }}"
-                                required
-                            >
+                    <tr data-editable-row>
+                        <td data-order="{{ $donnee->date }}">{{ \Carbon\Carbon::parse($donnee->date)->format('d-m-Y') }}</td>
+                        <td>
+                            <span data-display>{{ $donnee->poids }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="poids" class="form-control form-control-sm d-none" value="{{ $donnee->poids }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="poids" class="form-control form-control-sm" value="{{ $donnee->poids }}">
+                            <span data-display>{{ $donnee->pas }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="pas" min="0" class="form-control form-control-sm d-none" value="{{ $donnee->pas }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="pas" min="0" class="form-control form-control-sm" value="{{ $donnee->pas }}">
+                            <span data-display>{{ $donnee->calories }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="calories" class="form-control form-control-sm d-none" value="{{ $donnee->calories }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="calories" class="form-control form-control-sm" value="{{ $donnee->calories }}">
+                            <span data-display>{{ $donnee->proteines }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="proteines" class="form-control form-control-sm d-none" value="{{ $donnee->proteines }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="proteines" class="form-control form-control-sm" value="{{ $donnee->proteines }}">
+                            <span data-display>{{ $donnee->lipides }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="lipides" class="form-control form-control-sm d-none" value="{{ $donnee->lipides }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="lipides" class="form-control form-control-sm" value="{{ $donnee->lipides }}">
+                            <span data-display>{{ $donnee->glucides }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="glucides" class="form-control form-control-sm d-none" value="{{ $donnee->glucides }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="glucides" class="form-control form-control-sm" value="{{ $donnee->glucides }}">
+                            <span data-display>{{ $donnee->depenses }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.01" name="depenses" class="form-control form-control-sm d-none" value="{{ $donnee->depenses }}" disabled data-edit-input>
                         </td>
                         <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.01" name="depenses" class="form-control form-control-sm" value="{{ $donnee->depenses }}">
-                        </td>
-                        <td>
-                            <input form="donnee-update-{{ $donnee->id }}" type="text" name="etiquettes" class="form-control form-control-sm" value="{{ $donnee->etiquettes }}">
+                            <span data-display>{{ $donnee->etiquettes }}</span>
+                            <input form="donnee-update-{{ $donnee->id }}" type="text" name="etiquettes" class="form-control form-control-sm d-none" value="{{ $donnee->etiquettes }}" disabled data-edit-input>
                         </td>
                         <td>
                             <div class="d-flex gap-2 flex-wrap">
                                 <form id="donnee-update-{{ $donnee->id }}" method="POST" action="{{ route('donnees.update', $donnee->id) }}">
                                     @csrf
-                                    <button class="btn btn-sm btn-primary" type="submit">Enregistrer</button>
+                                    <input type="hidden" name="date" value="{{ \Carbon\Carbon::parse($donnee->date)->format('Y-m-d') }}">
+                                    <button class="btn btn-sm btn-outline-light" type="button" data-edit-button>Modifier</button>
+                                    <button class="btn btn-sm btn-primary d-none" type="submit" data-save-button>Enregistrer</button>
+                                    <button class="btn btn-sm btn-secondary d-none" type="button" data-cancel-button>Annuler</button>
                                 </form>
                                 <form method="POST" action="{{ route('donnees.destroy', $donnee->id) }}" onsubmit="return confirm('Supprimer cette entrée ?')">
                                     @csrf @method('DELETE')
