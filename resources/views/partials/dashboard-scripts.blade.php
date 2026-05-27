@@ -311,8 +311,9 @@ const layout = {
         const maxDate = dateMaxInput.value ? new Date(dateMaxInput.value) : null;
 
         rows.forEach(row => {
-            const dateCell = row.querySelector("td").textContent.trim();
-            const rowDate = new Date(dateCell.split("-").reverse().join("-"));
+            const dateCell = row.querySelector("td");
+            const dateValue = dateCell?.querySelector('input[type="date"]')?.value || dateCell?.dataset.order || dateCell?.textContent.trim();
+            const rowDate = new Date(dateValue.includes('-') && dateValue.length === 10 ? dateValue : dateValue.split("-").reverse().join("-"));
             let visible = true;
             if (minDate && rowDate < minDate) visible = false;
             if (maxDate && rowDate > maxDate) visible = false;

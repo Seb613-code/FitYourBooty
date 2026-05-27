@@ -31,20 +31,51 @@
             <tbody>
                 @foreach($donnees as $donnee)
                     <tr>
-                        <td>{{ \Carbon\Carbon::parse($donnee->date)->format('d-m-Y') }}</td>
-                        <td>{{ $donnee->poids }}</td>
-                        <td>{{ $donnee->pas }}</td>
-                        <td>{{ $donnee->calories }}</td>
-                        <td>{{ $donnee->proteines }}</td>
-                        <td>{{ $donnee->lipides }}</td>
-                        <td>{{ $donnee->glucides }}</td>
-                        <td>{{ $donnee->depenses }}</td>
-                        <td>{{ $donnee->etiquettes }}</td>
+                        <td data-order="{{ $donnee->date }}">
+                            <input
+                                form="donnee-update-{{ $donnee->id }}"
+                                type="date"
+                                name="date"
+                                class="form-control form-control-sm"
+                                value="{{ \Carbon\Carbon::parse($donnee->date)->format('Y-m-d') }}"
+                                required
+                            >
+                        </td>
                         <td>
-                            <form method="POST" action="{{ route('donnees.destroy', $donnee->id) }}">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-danger">Supprimer</button>
-                            </form>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="poids" class="form-control form-control-sm" value="{{ $donnee->poids }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="pas" min="0" class="form-control form-control-sm" value="{{ $donnee->pas }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" name="calories" class="form-control form-control-sm" value="{{ $donnee->calories }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="proteines" class="form-control form-control-sm" value="{{ $donnee->proteines }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="lipides" class="form-control form-control-sm" value="{{ $donnee->lipides }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.1" name="glucides" class="form-control form-control-sm" value="{{ $donnee->glucides }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="number" step="0.01" name="depenses" class="form-control form-control-sm" value="{{ $donnee->depenses }}">
+                        </td>
+                        <td>
+                            <input form="donnee-update-{{ $donnee->id }}" type="text" name="etiquettes" class="form-control form-control-sm" value="{{ $donnee->etiquettes }}">
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <form id="donnee-update-{{ $donnee->id }}" method="POST" action="{{ route('donnees.update', $donnee->id) }}">
+                                    @csrf
+                                    <button class="btn btn-sm btn-primary" type="submit">Enregistrer</button>
+                                </form>
+                                <form method="POST" action="{{ route('donnees.destroy', $donnee->id) }}" onsubmit="return confirm('Supprimer cette entrée ?')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-sm btn-danger" type="submit">Supprimer</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
