@@ -26,6 +26,21 @@
             </div>
         </div>
         <div class="mb-3">
+            <label class="form-label">Période du graphique :</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="chart-range-all" value="all" data-chart-range>
+                <label class="form-check-label" for="chart-range-all">Toutes les données</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="chart-range-year" value="year" data-chart-range checked>
+                <label class="form-check-label" for="chart-range-year">Dernière année</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="chart-range-month" value="month" data-chart-range>
+                <label class="form-check-label" for="chart-range-month">Dernier mois</label>
+            </div>
+        </div>
+        <div class="mb-3">
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="checkbox" id="check-etiquettes">
                 <label class="form-check-label" for="check-etiquettes">Afficher les étiquettes</label>

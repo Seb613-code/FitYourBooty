@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const dateMinInput = document.getElementById("date-min");
     const dateMaxInput = document.getElementById("date-max");
     const metricFields = ['poids', 'pas', 'calories', 'depenses'];
+    const chartRangeInputs = Array.from(document.querySelectorAll('[data-chart-range]'));
     const etiquettesCheckbox = document.getElementById('check-etiquettes');
     const etiquettesHelp = document.getElementById('etiquettes-help');
 
@@ -59,6 +60,32 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
+    function getChartDateCutoff(data) {
+        const selectedRange = chartRangeInputs.find(input => input.checked)?.value || 'year';
+        if (selectedRange === 'all') {
+            return null;
+        }
+
+        const dates = data
+            .map(d => new Date(d.date))
+            .filter(date => !isNaN(date));
+
+        if (!dates.length) {
+            return null;
+        }
+
+        const latestDate = new Date(Math.max(...dates));
+        const cutoff = new Date(latestDate);
+
+        if (selectedRange === 'month') {
+            cutoff.setMonth(cutoff.getMonth() - 1);
+            return cutoff;
+        }
+
+        cutoff.setFullYear(cutoff.getFullYear() - 1);
+        return cutoff;
+    }
+
     function updateChart() {
         const theme = {
             poids: '#7dd3fc',
@@ -87,8 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 : 'Indisponible quand plusieurs courbes sont sélectionnées.';
         }
         const showEtiquettes = canDisplayEtiquettes && !!etiquettesCheckbox?.checked;
-        const minDate = dateMinInput?.value ? new Date(dateMinInput.value) : null;
-        const maxDate = dateMaxInput?.value ? new Date(dateMaxInput.value) : null;
+        const chartDateCutoff = getChartDateCutoff(donnees);
         const seuilInput = document.getElementById('seuil_calories');
         if (seuilInput && !seuilInput.value) {
             seuilInput.value = '2000';
@@ -97,10 +123,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const filtered = donnees
             .filter(d => {
+                if (!chartDateCutoff) return true;
                 const dDate = new Date(d.date);
-                if (minDate && dDate < minDate) return false;
-                if (maxDate && dDate > maxDate) return false;
-                return true;
+                return dDate >= chartDateCutoff;
             })
             .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -227,16 +252,23 @@ const layout = {
         Plotly.newPlot('chart', traces, layout, { responsive: true });
     }
 
-    [...metricFields.map(field => document.getElementById('check-' + field)), etiquettesCheckbox]
+    [...metricFields.map(field => document.getElementById('check-' + field)), etiquettesCheckbox, ...chartRangeInputs]
         .filter(Boolean)
         .forEach(box => {
-        box.addEventListener('change', updateChart);
+            box.addEventListener('change', () => {
+                if (box.matches('[data-chart-range]') && box.checked) {
+                    chartRangeInputs.forEach(input => {
+                        if (input !== box) {
+                            input.checked = false;
+                        }
+                    });
+                }
+                if (box.matches('[data-chart-range]') && !chartRangeInputs.some(input => input.checked)) {
+                    box.checked = true;
+                }
+                updateChart();
+            });
     });
-
-    if (dateMinInput && dateMaxInput) {
-        dateMinInput.addEventListener('input', updateChart);
-        dateMaxInput.addEventListener('input', updateChart);
-    }
 
     const seuilInput = document.getElementById('seuil_calories');
     if (seuilInput) {
@@ -353,7 +385,6 @@ const layout = {
         dateMinInput.value = "";
         dateMaxInput.value = "";
         rows.forEach(row => row.style.display = "");
-        updateChart();
     });
 
     filterRows();
