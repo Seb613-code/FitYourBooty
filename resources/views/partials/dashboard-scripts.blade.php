@@ -219,36 +219,39 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        const minPoidsAnnotations = traces
-            .filter(trace => trace.name === 'Poids')
-            .map(trace => {
-                const points = trace.x
-                    .map((date, index) => ({
-                        date,
-                        value: Number(trace.y[index])
-                    }))
-                    .filter(point => !Number.isNaN(point.value));
+        const minPoidsAnnotations = selectedMetrics.length === 1 && selectedMetrics[0] === 'poids'
+            ? traces
+                .filter(trace => trace.name === 'Poids')
+                .map(trace => {
+                    const points = trace.x
+                        .map((date, index) => ({
+                            date,
+                            value: Number(trace.y[index])
+                        }))
+                        .filter(point => !Number.isNaN(point.value));
 
-                if (!points.length) {
-                    return null;
-                }
+                    if (!points.length) {
+                        return null;
+                    }
 
-                const minValue = Math.min(...points.map(point => point.value));
-                const latestMinPoint = points
-                    .filter(point => point.value === minValue)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    const minValue = Math.min(...points.map(point => point.value));
+                    const latestMinPoint = points
+                        .filter(point => point.value === minValue)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
-                return {
-                    x: latestMinPoint.date,
-                    y: latestMinPoint.value,
-                    yref: trace.yaxis || 'y',
-                    text: '⭐',
-                    showarrow: false,
-                    yshift: 22,
-                    font: { size: 18 }
-                };
-            })
-            .filter(Boolean);
+                    return {
+                        x: latestMinPoint.date,
+                        y: latestMinPoint.value,
+                        yref: trace.yaxis || 'y',
+                        text: '⭐',
+                        showarrow: false,
+                        yshift: -12,
+                        yanchor: 'top',
+                        font: { size: 18 }
+                    };
+                })
+                .filter(Boolean)
+            : [];
 
         const layout = {
     title: 'Evolution des données',
