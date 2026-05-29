@@ -60,6 +60,24 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
+    function findLatestMinPoidsPoint(data) {
+        const points = data
+            .map(d => ({
+                date: d.date,
+                value: parseLocaleFloat(d.poids)
+            }))
+            .filter(point => Number.isFinite(point.value));
+
+        if (!points.length) {
+            return null;
+        }
+
+        const minValue = Math.min(...points.map(point => point.value));
+        return points
+            .filter(point => point.value === minValue)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    }
+
     function getChartDateCutoff(data) {
         const selectedRange = chartRangeInputs.find(input => input.checked)?.value || 'year';
         if (selectedRange === 'all') {
@@ -219,70 +237,53 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        const minPoidsAnnotations = selectedMetrics.length === 1 && selectedMetrics[0] === 'poids'
-            ? traces
-                .filter(trace => trace.name === 'Poids')
-                .map(trace => {
-                    const points = trace.x
-                        .map((date, index) => ({
-                            date,
-                            value: Number(trace.y[index])
-                        }))
-                        .filter(point => !Number.isNaN(point.value));
-
-                    if (!points.length) {
-                        return null;
-                    }
-
-                    const minValue = Math.min(...points.map(point => point.value));
-                    const latestMinPoint = points
-                        .filter(point => point.value === minValue)
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-
-                    return {
-                        x: latestMinPoint.date,
-                        y: latestMinPoint.value,
-                        yref: trace.yaxis || 'y',
-                        text: '⭐',
-                        showarrow: false,
-                        yshift: -12,
-                        yanchor: 'top',
-                        font: { size: 18 }
-                    };
-                })
-                .filter(Boolean)
-            : [];
+        if (selectedMetrics.length === 1 && selectedMetrics[0] === 'poids') {
+            const minPoidsPoint = findLatestMinPoidsPoint(filtered);
+            if (minPoidsPoint) {
+                traces.push({
+                    x: [minPoidsPoint.date],
+                    y: [minPoidsPoint.value],
+                    text: ['⭐'],
+                    textposition: 'bottom center',
+                    mode: 'text',
+                    type: 'scatter',
+                    yaxis: 'y',
+                    hoverinfo: 'skip',
+                    showlegend: false,
+                    textfont: { size: 18 }
+                });
+            }
+        }
 
         const layout = {
-    title: 'Evolution des données',
-    dragmode: 'zoom',
-    margin: { t: 40, l: 50, r: 50, b: 40 },
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: theme.text },
-    xaxis: {
-        type: 'date',
-        gridcolor: theme.grid,
-        zerolinecolor: theme.grid
-    },
-    yaxis: {
-        title: 'Poids (kg)',
-        side: 'left',
-        gridcolor: theme.grid,
-        zerolinecolor: theme.grid
-    },
-    yaxis2: {
-        title: 'Calories / Dépenses / Pas',
-        overlaying: 'y',
-        side: 'right',
-        showgrid: false
-    },
-    legend: {
-        orientation: 'h',
-        y: -0.2
-    },
-    annotations: minPoidsAnnotations
-};
+            title: 'Evolution des données',
+            dragmode: 'zoom',
+            margin: { t: 40, l: 50, r: 50, b: 40 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: theme.text },
+            xaxis: {
+                type: 'date',
+                gridcolor: theme.grid,
+                zerolinecolor: theme.grid
+            },
+            yaxis: {
+                title: 'Poids (kg)',
+                side: 'left',
+                gridcolor: theme.grid,
+                zerolinecolor: theme.grid
+            },
+            yaxis2: {
+                title: 'Calories / Dépenses / Pas',
+                overlaying: 'y',
+                side: 'right',
+                showgrid: false
+            },
+            legend: {
+                orientation: 'h',
+                y: -0.2
+            }
+        };
 
         Plotly.newPlot('chart', traces, layout, { responsive: true });
     }
