@@ -219,7 +219,38 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-const layout = {
+        const minPoidsAnnotations = traces
+            .filter(trace => trace.name === 'Poids')
+            .map(trace => {
+                const points = trace.x
+                    .map((date, index) => ({
+                        date,
+                        value: Number(trace.y[index])
+                    }))
+                    .filter(point => !Number.isNaN(point.value));
+
+                if (!points.length) {
+                    return null;
+                }
+
+                const minValue = Math.min(...points.map(point => point.value));
+                const latestMinPoint = points
+                    .filter(point => point.value === minValue)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+                return {
+                    x: latestMinPoint.date,
+                    y: latestMinPoint.value,
+                    yref: trace.yaxis || 'y',
+                    text: '⭐',
+                    showarrow: false,
+                    yshift: 22,
+                    font: { size: 18 }
+                };
+            })
+            .filter(Boolean);
+
+        const layout = {
     title: 'Evolution des données',
     dragmode: 'zoom',
     margin: { t: 40, l: 50, r: 50, b: 40 },
@@ -246,7 +277,8 @@ const layout = {
     legend: {
         orientation: 'h',
         y: -0.2
-    }
+    },
+    annotations: minPoidsAnnotations
 };
 
         Plotly.newPlot('chart', traces, layout, { responsive: true });
