@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Donnee;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DonneeController extends Controller
@@ -11,8 +11,8 @@ class DonneeController extends Controller
     public function index()
     {
         $donnees = Donnee::where('user_id', Auth::id())
-                         ->orderByDesc('date')
-                         ->get();
+            ->orderByDesc('date')
+            ->get();
 
         return view('dashboard', compact('donnees'));
     }
@@ -31,8 +31,10 @@ class DonneeController extends Controller
             'etiquettes' => 'nullable|string',
         ]);
 
-        $data['user_id'] = Auth::id();
-        Donnee::create($data);
+        $date = $data['date'];
+        unset($data['date']);
+
+        $this->mergeDonnee(Auth::id(), $date, $data);
 
         return redirect()->route('dashboard');
     }
@@ -53,28 +55,18 @@ class DonneeController extends Controller
         $handle = fopen($request->file('csv')->getRealPath(), 'r');
         $header = fgetcsv($handle, 1000, ',');
 
-        function toDecimal($value) {
-            if ($value === '' || $value === null) {
-                return null;
-            }
-            $value = preg_replace('/[\x{00A0}\x{202F}\s]+/u', '', $value);
-            return str_replace(',', '.', $value);
-        }
-
         while (($row = fgetcsv($handle, 1000, ',')) !== false) {
             $ligne = array_combine($header, $row);
             $date = \DateTime::createFromFormat('d-m-Y', $ligne['date']);
 
-            Donnee::create([
-                'user_id' => $userId,
-                'date' => $date ? $date->format('Y-m-d') : null,
-                'poids' => toDecimal($ligne['poids']),
-                'pas' => isset($ligne['pas']) && $ligne['pas'] !== '' ? (int) toDecimal($ligne['pas']) : null,
-                'calories' => toDecimal($ligne['calories']),
-                'proteines' => toDecimal($ligne['proteines']),
-                'lipides' => toDecimal($ligne['lipides']),
-                'glucides' => toDecimal($ligne['glucides']),
-                'depenses' => toDecimal($ligne['depenses']),
+            $this->mergeDonnee($userId, $date ? $date->format('Y-m-d') : null, [
+                'poids' => $this->toDecimal($ligne['poids']),
+                'pas' => isset($ligne['pas']) && $ligne['pas'] !== '' ? (int) $this->toDecimal($ligne['pas']) : null,
+                'calories' => $this->toDecimal($ligne['calories']),
+                'proteines' => $this->toDecimal($ligne['proteines']),
+                'lipides' => $this->toDecimal($ligne['lipides']),
+                'glucides' => $this->toDecimal($ligne['glucides']),
+                'depenses' => $this->toDecimal($ligne['depenses']),
                 'etiquettes' => $ligne['etiquettes'] ?: null,
             ]);
         }
@@ -82,6 +74,33 @@ class DonneeController extends Controller
         fclose($handle);
 
         return redirect()->back()->with('success', 'Fichier CSV importé avec succès !');
+    }
+
+    private function mergeDonnee(int $userId, ?string $date, array $values): void
+    {
+        $donnee = Donnee::firstOrNew([
+            'user_id' => $userId,
+            'date' => $date,
+        ]);
+
+        foreach ($values as $field => $value) {
+            if ($value !== null && $value !== '') {
+                $donnee->{$field} = $value;
+            }
+        }
+
+        $donnee->save();
+    }
+
+    private function toDecimal(?string $value): ?string
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        $value = preg_replace('/[\x{00A0}\x{202F}\s]+/u', '', $value);
+
+        return str_replace(',', '.', $value);
     }
 
     public function update(Request $request, Donnee $donnee)
