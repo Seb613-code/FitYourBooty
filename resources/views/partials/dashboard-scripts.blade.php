@@ -1,4 +1,4 @@
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js" defer></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const donneesScript = document.getElementById('donnees-data');
@@ -20,6 +20,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 .replace(',', '.')
         );
     }
+
+    // Les données du graphique sont normalisées et triées une seule fois.
+    // Le tableau historique continue d'utiliser les données brutes rendues par Blade.
+    const chartData = donnees
+        .map(d => ({
+            ...d,
+            timestamp: Date.parse(d.date),
+            poids: parseLocaleFloat(d.poids),
+            pas: parseLocaleFloat(d.pas),
+            calories: parseLocaleFloat(d.calories),
+            depenses: parseLocaleFloat(d.depenses),
+        }))
+        .filter(d => Number.isFinite(d.timestamp))
+        .sort((a, b) => a.timestamp - b.timestamp);
 
     function movingAverage(data, windowSize) {
         const result = [];
@@ -84,15 +98,15 @@ document.addEventListener("DOMContentLoaded", function () {
             return null;
         }
 
-        const dates = data
-            .map(d => new Date(d.date))
-            .filter(date => !isNaN(date));
+        const timestamps = data
+            .map(d => d.timestamp)
+            .filter(Number.isFinite);
 
-        if (!dates.length) {
+        if (!timestamps.length) {
             return null;
         }
 
-        const latestDate = new Date(Math.max(...dates));
+        const latestDate = new Date(Math.max(...timestamps));
         const cutoff = new Date(latestDate);
 
         if (selectedRange === 'month') {
@@ -132,20 +146,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 : 'Indisponible quand plusieurs courbes sont sélectionnées.';
         }
         const showEtiquettes = canDisplayEtiquettes && !!etiquettesCheckbox?.checked;
-        const chartDateCutoff = getChartDateCutoff(donnees);
+        const chartDateCutoff = getChartDateCutoff(chartData);
         const seuilInput = document.getElementById('seuil_calories');
         if (seuilInput && !seuilInput.value) {
             seuilInput.value = '2000';
         }
         const seuilCalories = seuilInput?.value ? parseFloat(seuilInput.value) : 2000;
 
-        const filtered = donnees
+        const filtered = chartData
             .filter(d => {
                 if (!chartDateCutoff) return true;
-                const dDate = new Date(d.date);
-                return dDate >= chartDateCutoff;
-            })
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
+                return d.timestamp >= chartDateCutoff.getTime();
+            });
 
         const traces = [];
 
@@ -285,8 +297,18 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         };
 
-        Plotly.newPlot('chart', traces, layout, { responsive: true });
+        Plotly.react('chart', traces, layout, { responsive: true });
     }
+
+    function debounce(callback, delay = 180) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = window.setTimeout(() => callback(...args), delay);
+        };
+    }
+
+    const updateChartAfterInput = debounce(updateChart);
 
     [...metricFields.map(field => document.getElementById('check-' + field)), etiquettesCheckbox, ...chartRangeInputs]
         .filter(Boolean)
@@ -311,7 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!seuilInput.value) {
             seuilInput.value = '2000';
         }
-        seuilInput.addEventListener('input', updateChart);
+        seuilInput.addEventListener('input', updateChartAfterInput);
     }
 
     const objectifStartInput = document.getElementById('objectif_start');
@@ -364,7 +386,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (id === 'objectif_weight') {
                     localStorage.setItem('objectif_weight', input.value);
                 }
-                updateChart();
+                updateChartAfterInput();
             });
         }
     });
